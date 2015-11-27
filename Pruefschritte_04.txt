@@ -1,0 +1,66 @@
+Porsche Klimasteuerger‰te Pr¸fschritte
+
+005 716 - 06
+
+Schritt 0:
+Grundstellung. Alle Tasten aus. Gebl‰se und Temp-Poti ganz links. Defrost- und Fuﬂraum-Poti mittig.
+
+Schritt 1:
+Defrost-Poti rechts
+
+Schritt 2:
+Defrost-Poti links
+
+Schritt 3:
+Fuﬂraum-Poti rechts
+
+Schritt 4:
+Fuﬂraum-Poti links
+
+Schritt 5:
+Umluft an
+
+Schritt 6:
+Umluft aus
+
+Schritt 7:
+Temp-Poti rechts
+
+Schritt 8:
+Temp-Poti links
+
+Schritt 9:
+Temp-Poti rechts
+
+Schritt 10:
+AC an
+
+Schritt 11:
+AC aus
+
+Schritt 12:
+Temp-Poti links
+
+Schritt 13:
+AC ein
+
+Schritt 14:
+Gebl‰se-Poti mitte
+
+Schritt 15:
+Defrost an (kurze Pause)
+
+Schritt 16:
+Defrost aus
+
+Schritt 17:
+ACMax an
+
+Schritt 18:
+ACMax aus
+Gebl‰se-Poti rechts
+
+(lange Pause / Nachlauftest)
+
+Schritt 19:
+Temp-Poti mitte
