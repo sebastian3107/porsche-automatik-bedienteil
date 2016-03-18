@@ -23,6 +23,10 @@ Porsche Klimasteuergeräte Automatik Bedienteil
   * SDI (MOSI Pin)         - Digital Pin 11
   * CLK (SCK Pin)          - Digital Pin 13
 
+  Digital-Potentiometer:
+  * Chip A - Defrost- und Fussraumpoti
+  * Chip B - Geblaese- und Temperaturpoti
+
 
  August 2015
  Sebastian Schult
