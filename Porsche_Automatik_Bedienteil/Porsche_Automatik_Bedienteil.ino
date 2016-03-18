@@ -68,6 +68,7 @@ const int wiper1writeAddr = B00010000; //Schreibadresse für Poti 1 der jeweilig
 const int button1        = 2;     //Pin 2: Taste 1
 const int button2        = 3;     //Pin 3: Taste 2
 const int drehpoti       = A1;    //Analog Pin 1: Dreh-Potentiometer (5 Stufen)
+const int ldr            = A0;    //LDR Photowiderstand für die Schrittabschlusserkennung
 
 int aktueller_schritt    = -1;    //Speichert den aktuellen Prüfschritt
 int schrittspeicher      = 99;    //Zwischenspeicher für den Wert aus "aktueller_schritt"
@@ -83,9 +84,9 @@ int flag                 = 0;     //wird gesetzt, um den Startbefehl nur einmal 
 int wiederholung         = 0;     //Speichert die Anzahl der eingestellten Prüflauf-Wiederholungen
 long extrazeit           = 0;     //Kann bei Prüfschritten, die besonders lange dauern, aktiviert werden
 
-const long countdown     = 10000; //10 Sekunden bis zum nächsten Schritt
+const long countdown     = 15000; //15 Sekunden bis zum nächsten Schritt
 
-int pruefungen_gesamt    = 2;     //Die aktuelle Gesamtzahl der gespeicherten Prüfabläufe
+int pruefungen_gesamt    = 3;     //Die aktuelle Gesamtzahl der gespeicherten Prüfabläufe
 
 
 /*################### Setup ###################*/
@@ -176,6 +177,14 @@ void loop() {
   Wiederholung();
  }
 
+
+ //Schrittabschlusserkennung durch LDR ruft nächsten Schritt auf wenn die Tastatur-LED aufleuchtet (mit 3 Sekunden Cooldown)
+ if(analogRead(ldr) >= 512 && menu == 3 && millis() - time >= 3000){
+  aktueller_schritt++;
+  time = millis();
+ }
+
+
 }
 
 
@@ -212,12 +221,15 @@ void Menu(){
         Serial.println("Pruefung Start");
         lcd.print("Starte Pruefung");
         MausklickSteuerung();
+        if(pruef_auswahl != 2) //Nicht im Diagnose-Modus ausführen
+        {
         lcd.setCursor(0,1);
         Serial.println("Vortest");
         lcd.print("Vortest");
         ExtraZeit(20);
         lcd.home();
         lcd.print("                ");
+        }
       }
       Pruefauswahl(pruef_auswahl);
       break;
@@ -241,7 +253,19 @@ void Menu(){
 void Pruefauswahl(int nummer){
 
   switch (nummer) {
+    
     case 0:
+      if(menu == 1){
+        Serial.println("Pruefung 06");
+        lcd.setCursor(0,1);
+      }
+      else{
+        lcd.home();
+      }
+      lcd.print("Pruefung 06   ");
+      Pruefung_06();
+      break;
+    case 1:
       if(menu == 1){
         Serial.println("Pruefung 04");
         lcd.setCursor(0,1);
@@ -252,16 +276,16 @@ void Pruefauswahl(int nummer){
       lcd.print("Pruefung 04 ");
       Pruefung_04();
       break;
-    case 1:
+    case 2:
       if(menu == 1){
-        Serial.println("Pruefung 06");
+        Serial.println("Diagnose");
         lcd.setCursor(0,1);
       }
       else{
         lcd.home();
       }
-      lcd.print("Pruefung 06 ");
-      Pruefung_06();
+      lcd.print("Diagnose-Modus ");
+      Diagnose();
       break;
     default:
       Serial.print("Error!\n");
@@ -275,6 +299,9 @@ void AuswahlTaste() {
   if(millis() - time > entprellen){
     if(menu == 1){
       pruef_auswahl++;
+    }
+    else{
+      extrazeit = countdown*(-1);
     }
   }
   time = millis();
@@ -297,8 +324,22 @@ void Wiederholung(){
   if(menu == 2){
     wiederholung = map(analogRead(drehpoti), 0, 1023, 0, 4);
     lcd.setCursor (0,1);
-    lcd.print("Wiederholung:  ");
-    lcd.print(wiederholung);
+    if(pruef_auswahl != 2){
+      lcd.print("Wiederholung:  ");
+      lcd.print(wiederholung);
+    }
+    else{
+      lcd.print("LDR-Wert:  "); //Wert wird im Diagnose-Modus in Echtzeit ausgegeben
+      int ldr_wert = analogRead(ldr);
+      if(ldr_wert < 100){
+        lcd.print("0");
+        if(ldr_wert < 10){
+          lcd.print("0");
+        }
+      }
+      lcd.print(ldr_wert);
+      delay(100);
+    }
   }
   else{
     if(wiederholung > 0){
@@ -460,11 +501,14 @@ void Startsequenz(){
 }
 
 void MausklickSteuerung(){
-  delay(1000);
-  digitalWrite(mausklick, LOW);
-  delay(150);
-  digitalWrite(mausklick, HIGH);
-  Serial.println("Klick\n");
+  if(pruef_auswahl != 2) //Nicht im Diagnose-Modus weiterspringen
+  {
+    delay(750);
+    digitalWrite(mausklick, LOW);
+    delay(150);
+    digitalWrite(mausklick, HIGH);
+    Serial.println("Klick\n");
+  }
 }
 
 void Pruefschrittanzeige(){
@@ -716,3 +760,67 @@ void Pruefung_04(){
       }
   }
 }
+
+void Diagnose(){
+  //Prüft die Funktion aller Digitalpotentiometer und Relais
+  int diagnose_zeit = (countdown/1000 - 3)*(-1); //Schritte dauern 3 Sekunden
+  ExtraZeit(diagnose_zeit);
+  
+  switch (aktueller_schritt) {
+    case -1:
+      break;
+    case 0:
+      TastenSteuerung(acmax, aus);
+      TastenSteuerung(ac, aus);
+      TastenSteuerung(umluft, aus);
+      TastenSteuerung(defrost, aus);
+      PotiSteuerung(temp, mitte);
+      PotiSteuerung(geblaese, mitte);
+      PotiSteuerung(defrost_poti, mitte);
+      PotiSteuerung(fussraum_poti, mitte); 
+      break;
+    case 1:
+      PotiSteuerung(temp, rechts);
+      PotiSteuerung(geblaese, rechts);
+      PotiSteuerung(defrost_poti, rechts);
+      PotiSteuerung(fussraum_poti, rechts);
+      break;
+    case 2:
+      PotiSteuerung(temp, links);
+      PotiSteuerung(geblaese, links);
+      PotiSteuerung(defrost_poti, links);
+      PotiSteuerung(fussraum_poti, links); 
+      break;
+    case 3:
+      TastenSteuerung(acmax, an);
+      break;
+    case 4:
+      TastenSteuerung(acmax, aus);
+      TastenSteuerung(ac, an);
+      break;
+    case 5:
+      TastenSteuerung(ac, aus);
+      TastenSteuerung(umluft, an);
+      break;
+    case 6:
+      TastenSteuerung(umluft, aus);
+      TastenSteuerung(defrost, an);
+      break;
+    case 7:
+      TastenSteuerung(defrost, aus);
+      break;
+    case 8:
+      PotiSteuerung(temp, mitte);
+      PotiSteuerung(geblaese, mitte);
+      PotiSteuerung(defrost_poti, mitte);
+      PotiSteuerung(fussraum_poti, mitte); 
+      break;
+    default:
+      lcd.clear();
+      lcd.home();
+      lcd.print("Ende");
+      delay(2000);
+      Reset();
+  }
+}
+
